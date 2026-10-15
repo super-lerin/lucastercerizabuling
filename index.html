@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhe Colagem — Arte em Cada Detalhe</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/playfair-display@latest/latin-700.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-400.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-600.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/caveat@latest/latin-400.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --terracotta: #C4704B;
+            --mustard: #D4A843;
+            --sage: #8BA888;
+            --cream: #FDF5E6;
+            --blush: #E8A0BF;
+            --lavender: #B8A9D4;
+            --peach: #F5C7A9;
+            --dark: #2D2A26;
+            --warm-white: #FEFAF3;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--warm-white);
+            color: var(--dark);
+            overflow-x: hidden;
+        }
+
+        /* Custom Cursor */
+        .cursor {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--terracotta);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            transition: transform 0.2s ease, opacity 0.2s ease;
+            mix-blend-mode: difference;
+        }
+        .cursor.active { transform: scale(2.5); opacity: 0.5; }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 1.5rem 4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            background: rgba(254, 250, 243, 0.8);
+            transition: all 0.4s ease;
+        }
+        nav.scrolled { padding: 1rem 4rem; box-shadow: 0 4px 30px rgba(0,0,0,0.05); }
+
+        .logo {
+            font-family: 'Caveat', cursive;
+            font-size: 2rem;
+            color: var(--terracotta);
+            text-decoration: none;
+            position: relative;
+        }
+        .logo::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--mustard);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+        .logo:hover::after { transform: scaleX(1); }
+
+        .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+        .nav-links a {
+            text-decoration: none;
+            color: var(--dark);
+            font-size: 0.9rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            position: relative;
+            transition: color 0.3s ease;
+        }
+        .nav-links a::before {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            width: 6px;
+            height: 6px;
+            background: var(--terracotta);
+            border-radius: 50%;
+            transform: translateX(-50%) scale(0);
+            transition: transform 0.3s ease;
+        }
+        .nav-links a:hover { color: var(--terracotta); }
+        .nav-links a:hover::before { transform: translateX(-50%) scale(1); }
+
+        .menu-toggle { display: none; flex-direction: column; gap: 5px; cursor: pointer; z-index: 1001; }
+        .menu-toggle span { width: 28px; height: 2px; background: var(--dark); transition: all 0.3s ease; }
+
+        /* Hero */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 2rem;
+            overflow: hidden;
+        }
+
+        .hero-bg-shapes { position: absolute; inset: 0; pointer-events: none; }
+        .floating-shape {
+            position: absolute;
+            border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+            opacity: 0.15;
+            animation: float 8s ease-in-out infinite;
+        }
+        .shape-1 { width: 300px; height: 300px; background: var(--terracotta); top: 10%; left: 5%; }
+        .shape-2 { width: 200px; height: 200px; background: var(--sage); top: 60%; right: 10%; animation-delay: -2s; }
+        .shape-3 { width: 250px; height: 250px; background: var(--blush); bottom: 10%; left: 20%; animation-delay: -4s; }
+        .shape-4 { width: 180px; height: 180px; background: var(--lavender); top: 20%; right: 25%; animation-delay: -6s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            33% { transform: translateY(-20px) rotate(5deg); }
+            66% { transform: translateY(10px) rotate(-3deg); }
+        }
+
+        .hero-content { text-align: center; position: relative; z-index: 2; max-width: 900px; }
+
+        .hero-tag {
+            font-family: 'Caveat', cursive;
+            font-size: 1.4rem;
+            color: var(--terracotta);
+            margin-bottom: 1rem;
+            opacity: 0;
+            animation: fadeUp 0.8s ease forwards 0.3s;
+        }
+
+        .hero-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(3rem, 8vw, 6rem);
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            opacity: 0;
+            animation: fadeUp 0.8s ease forwards 0.5s;
+        }
+        .hero-title .highlight { position: relative; display: inline-block; }
+        .hero-title .highlight::after {
+            content: '';
+            position: absolute;
+            bottom: 5px;
+            left: -5px;
+            right: -5px;
+            height: 40%;
+            background: var(--peach);
+            opacity: 0.4;
+            z-index: -1;
+            transform: skew(-5deg);
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            color: #666;
+            max-width: 600px;
+            margin: 0 auto 2.5rem;
+            line-height: 1.7;
+            opacity: 0;
+            animation: fadeUp 0.8s ease forwards 0.7s;
+        }
+
+        .hero-cta {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            opacity: 0;
+            animation: fadeUp 0.8s ease forwards 0.9s;
+        }
+
+        .btn {
+            padding: 1rem 2.5rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+        .btn-primary {
+            background: var(--terracotta);
+            color: white;
+            box-shadow: 0 4px 15px rgba(196, 112, 75, 0.3);
+        }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(196, 112, 75, 0.4); }
+        .btn-secondary { background: transparent; color: var(--dark); border: 2px solid var(--dark); }
+        .btn-secondary:hover { background: var(--dark); color: white; transform: translateY(-3px); }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Collage Strip */
+        .collage-strip { padding: 4rem 0; overflow: hidden; position: relative; }
+        .collage-scroll {
+            display: flex;
+            gap: 2rem;
+            animation: scroll 40s linear infinite;
+            width: max-content;
+        }
+        .collage-item {
+            width: 280px;
+            height: 350px;
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+            flex-shrink: 0;
+            transition: transform 0.4s ease;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        .collage-item:hover { transform: scale(1.05) rotate(-2deg); }
+        .collage-item:nth-child(even) { transform: rotate(2deg); }
+        .collage-item:nth-child(even):hover { transform: scale(1.05) rotate(0deg); }
+        .collage-item img { width: 100%; height: 100%; object-fit: cover; }
+
+        @keyframes scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* About */
+        .about {
+            padding: 8rem 4rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6rem;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .about-visual { position: relative; height: 500px; }
+        .about-card {
+            position: absolute;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.1);
+            transition: transform 0.5s ease;
+        }
+        .about-card:hover { transform: translateY(-10px) rotate(0deg) !important; }
+        .about-card img { width: 100%; height: 100%; object-fit: cover; }
+        .about-card-1 { width: 280px; height: 350px; top: 0; left: 0; transform: rotate(-5deg); z-index: 2; }
+        .about-card-2 { width: 240px; height: 300px; top: 50px; right: 0; transform: rotate(5deg); z-index: 1; }
+        .about-card-3 { width: 200px; height: 250px; bottom: 0; left: 50%; transform: translateX(-50%) rotate(-2deg); z-index: 3; }
+
+        .about-text h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+        }
+        .about-text p { color: #555; line-height: 1.8; margin-bottom: 1.5rem; font-size: 1.05rem; }
+        .about-text .handwritten {
+            font-family: 'Caveat', cursive;
+            font-size: 1.5rem;
+            color: var(--terracotta);
+        }
+
+        .tags { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-top: 2rem; }
+        .tag {
+            padding: 0.5rem 1.2rem;
+            background: var(--cream);
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--terracotta);
+            border: 1px solid rgba(196, 112, 75, 0.2);
+            transition: all 0.3s ease;
+        }
+        .tag:hover { background: var(--terracotta); color: white; transform: translateY(-2px); }
+
+        /* Services */
+        .services { padding: 8rem 4rem; background: var(--cream); position: relative; }
+        .services::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            left: 0;
+            right: 0;
+            height: 100px;
+            background: var(--warm-white);
+            clip-path: ellipse(60% 100% at 50% 0%);
+        }
+
+        .section-header { text-align: center; max-width: 700px; margin: 0 auto 5rem; }
+        .section-header h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        .section-header p { color: #666; font-size: 1.1rem; line-height: 1.7; }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .service-card {
+            background: white;
+            border-radius: 24px;
+            padding: 3rem 2.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        .service-card:hover { transform: translateY(-10px); box-shadow: 0 20px 60px rgba(0,0,0,0.08); }
+        .service-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            transition: height 0.4s ease;
+        }
+        .service-card:nth-child(1)::before { background: var(--terracotta); }
+        .service-card:nth-child(2)::before { background: var(--sage); }
+        .service-card:nth-child(3)::before { background: var(--blush); }
+        .service-card:nth-child(4)::before { background: var(--lavender); }
+        .service-card:hover::before { height: 6px; }
+
+        .service-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            font-size: 2rem;
+        }
+        .service-card:nth-child(1) .service-icon { background: rgba(196, 112, 75, 0.1); }
+        .service-card:nth-child(2) .service-icon { background: rgba(139, 168, 136, 0.1); }
+        .service-card:nth-child(3) .service-icon { background: rgba(232, 160, 191, 0.1); }
+        .service-card:nth-child(4) .service-icon { background: rgba(184, 169, 212, 0.1); }
+
+        .service-card h3 { font-family: 'Playfair Display', serif; font-size: 1.4rem; margin-bottom: 1rem; }
+        .service-card p { color: #666; line-height: 1.7; font-size: 0.95rem; }
+
+        /* Gallery */
+        .gallery { padding: 8rem 4rem; max-width: 1400px; margin: 0 auto; }
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 1.5rem;
+        }
+        .gallery-item {
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+            transition: all 0.5s ease;
+            cursor: pointer;
+        }
+        .gallery-item:hover { transform: scale(1.02); box-shadow: 0 20px 60px rgba(0,0,0,0.15); z-index: 10; }
+        .gallery-item:nth-child(1) { grid-column: 1 / 5; height: 350px; }
+        .gallery-item:nth-child(2) { grid-column: 5 / 9; height: 350px; }
+        .gallery-item:nth-child(3) { grid-column: 9 / 13; height: 350px; }
+        .gallery-item:nth-child(4) { grid-column: 1 / 7; height: 300px; }
+        .gallery-item:nth-child(5) { grid-column: 7 / 13; height: 300px; }
+        .gallery-item img { width: 100%; height: 100%; object-fit: cover; }
+
+        .gallery-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(45,42,38,0.8), transparent);
+            display: flex;
+            align-items: flex-end;
+            padding: 2rem;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        .gallery-item:hover .gallery-overlay { opacity: 1; }
+        .gallery-overlay span {
+            color: white;
+            font-family: 'Caveat', cursive;
+            font-size: 1.3rem;
+        }
+
+        /* Testimonials */
+        .testimonials {
+            padding: 8rem 4rem;
+            background: var(--dark);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        .testimonials .section-header h2 { color: white; }
+        .testimonials .section-header p { color: rgba(255,255,255,0.6); }
+
+        .testimonial-slider { max-width: 800px; margin: 0 auto; position: relative; }
+        .testimonial-card { text-align: center; padding: 3rem; display: none; animation: fadeIn 0.5s ease; }
+        .testimonial-card.active { display: block; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .testimonial-card .quote {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            line-height: 1.7;
+            margin-bottom: 2rem;
+            color: rgba(255,255,255,0.9);
+        }
+        .testimonial-card .author { font-family: 'Caveat', cursive; font-size: 1.3rem; color: var(--peach); }
+
+        .testimonial-dots { display: flex; justify-content: center; gap: 0.8rem; margin-top: 2rem; }
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .dot.active { background: var(--peach); transform: scale(1.3); }
+
+        /* CTA */
+        .cta-section { padding: 8rem 4rem; text-align: center; position: relative; }
+        .cta-section h2 { font-family: 'Playfair Display', serif; font-size: 3.5rem; margin-bottom: 1.5rem; }
+        .cta-section p { color: #666; font-size: 1.2rem; max-width: 600px; margin: 0 auto 3rem; line-height: 1.7; }
+        .cta-decoration { position: absolute; width: 100%; height: 100%; top: 0; left: 0; pointer-events: none; }
+        .cta-decoration .deco { position: absolute; border-radius: 50%; opacity: 0.1; }
+        .deco-1 { width: 200px; height: 200px; background: var(--terracotta); top: 10%; left: 5%; }
+        .deco-2 { width: 150px; height: 150px; background: var(--sage); bottom: 10%; right: 10%; }
+        .deco-3 { width: 100px; height: 100px; background: var(--blush); top: 30%; right: 15%; }
+
+        /* Footer */
+        footer { background: var(--dark); color: white; padding: 5rem 4rem 2rem; }
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 4rem;
+            margin-bottom: 4rem;
+        }
+        .footer-brand .logo { color: white; font-size: 2.5rem; display: inline-block; margin-bottom: 1rem; }
+        .footer-brand p { color: rgba(255,255,255,0.6); line-height: 1.7; font-size: 0.95rem; }
+        .footer-col h4 { font-family: 'Playfair Display', serif; margin-bottom: 1.5rem; font-size: 1.1rem; }
+        .footer-col ul { list-style: none; }
+        .footer-col ul li { margin-bottom: 0.8rem; }
+        .footer-col ul li a {
+            color: rgba(255,255,255,0.6);
+            text-decoration: none;
+            transition: color 0.3s ease;
+            font-size: 0.9rem;
+        }
+        .footer-col ul li a:hover { color: var(--peach); }
+        .footer-bottom {
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 2rem;
+            text-align: center;
+            color: rgba(255,255,255,0.4);
+            font-size: 0.85rem;
+        }
+        .social-links { display: flex; gap: 1rem; margin-top: 1.5rem; }
+        .social-links a {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-size: 1.1rem;
+        }
+        .social-links a:hover { background: var(--terracotta); border-color: var(--terracotta); transform: translateY(-3px); }
+
+        /* Reveal */
+        .reveal { opacity: 0; transform: translateY(40px); transition: all 0.8s ease; }
+        .reveal.visible { opacity: 1; transform: translateY(0); }
+
+        /* Marquee */
+        .marquee {
+            padding: 2rem 0;
+            overflow: hidden;
+            border-top: 1px solid rgba(0,0,0,0.05);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        .marquee-content {
+            display: flex;
+            gap: 3rem;
+            animation: marquee 25s linear infinite;
+            width: max-content;
+            align-items: center;
+        }
+        .marquee-content span {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            color: var(--dark);
+            white-space: nowrap;
+            opacity: 0.3;
+        }
+        .marquee-content .separator {
+            width: 8px;
+            height: 8px;
+            background: var(--terracotta);
+            border-radius: 50%;
+            opacity: 0.5;
+        }
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* Loader */
+        .loader {
+            position: fixed;
+            inset: 0;
+            background: var(--warm-white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+        .loader.hidden { opacity: 0; visibility: hidden; }
+        .loader-text {
+            font-family: 'Caveat', cursive;
+            font-size: 2.5rem;
+            color: var(--terracotta);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.4; transform: scale(0.98); }
+            50% { opacity: 1; transform: scale(1); }
+        }
+
+        /* Info Banner */
+        .info-banner {
+            background: linear-gradient(135deg, var(--peach), var(--blush));
+            padding: 1.5rem 4rem;
+            text-align: center;
+            font-size: 0.95rem;
+            color: var(--dark);
+            border-bottom: 1px solid rgba(196, 112, 75, 0.2);
+        }
+        .info-banner strong { font-family: 'Caveat', cursive; font-size: 1.2rem; color: var(--terracotta); }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .about { grid-template-columns: 1fr; gap: 4rem; padding: 6rem 2rem; }
+            .about-visual { height: 400px; max-width: 500px; margin: 0 auto; }
+            .gallery-grid { grid-template-columns: repeat(2, 1fr); }
+            .gallery-item:nth-child(n) { grid-column: auto; height: 250px; }
+            .footer-content { grid-template-columns: 1fr 1fr; gap: 2rem; }
+        }
+
+        @media (max-width: 768px) {
+            nav { padding: 1rem 2rem; }
+            .nav-links {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: var(--warm-white);
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 2rem;
+            }
+            .nav-links.open { display: flex; }
+            .nav-links a { font-size: 1.5rem; }
+            .menu-toggle { display: flex; }
+            .hero-title { font-size: 2.5rem; }
+            .services { padding: 6rem 2rem; }
+            .gallery { padding: 4rem 2rem; }
+            .gallery-grid { grid-template-columns: 1fr; }
+            .cta-section h2 { font-size: 2.5rem; }
+            .footer-content { grid-template-columns: 1fr; }
+            .about-text h2 { font-size: 2.2rem; }
+            .section-header h2 { font-size: 2.2rem; }
+            .info-banner { padding: 1.5rem 2rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loader -->
+    <div class="loader" id="loader">
+        <span class="loader-text">criando arte...</span>
+    </div>
+
+    <!-- Custom Cursor -->
+    <div class="cursor" id="cursor"></div>
+
+    <!-- Info Banner -->
+    <div class="info-banner" style="margin-top: 70px;">
+        <strong>✦ Nota:</strong> As imagens abaixo são ilustrações geradas por IA inspiradas na estética de colagem artística. Para usar as fotos reais do <a href="https://www.instagram.com/detalhecolagem/" target="_blank" style="color: var(--terracotta); font-weight: 600;">@detalhecolagem</a>, é necessário solicitar permissão diretamente ao autor.
+    </div>
+
+    <!-- Navigation -->
+    <nav id="navbar">
+        <a href="#" class="logo">detalhe colagem</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="#inicio">Início</a></li>
+            <li><a href="#sobre">Sobre</a></li>
+            <li><a href="#servicos">Serviços</a></li>
+            <li><a href="#galeria">Galeria</a></li>
+            <li><a href="#contato">Contato</a></li>
+        </ul>
+        <div class="menu-toggle" id="menuToggle">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero" id="inicio">
+        <div class="hero-bg-shapes">
+            <div class="floating-shape shape-1"></div>
+            <div class="floating-shape shape-2"></div>
+            <div class="floating-shape shape-3"></div>
+            <div class="floating-shape shape-4"></div>
+        </div>
+        <div class="hero-content">
+            <p class="hero-tag">✦ arte em papel, alma em cada peça</p>
+            <h1 class="hero-title">
+                Cada <span class="highlight">detalhe</span> conta uma história
+            </h1>
+            <p class="hero-subtitle">
+                Transformamos memórias, texturas e cores em colagens únicas que despertam emoções e celebram a beleza do handmade.
+            </p>
+            <div class="hero-cta">
+                <a href="#galeria" class="btn btn-primary">Ver Trabalhos</a>
+                <a href="#contato" class="btn btn-secondary">Fale Conosco</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Marquee -->
+    <div class="marquee">
+        <div class="marquee-content">
+            <span>Colagem Artística</span><div class="separator"></div>
+            <span>Papel Recortado</span><div class="separator"></div>
+            <span>Mixed Media</span><div class="separator"></div>
+            <span>Arte Manual</span><div class="separator"></div>
+            <span>Texturas & Cores</span><div class="separator"></div>
+            <span>Criatividade</span><div class="separator"></div>
+            <span>Colagem Artística</span><div class="separator"></div>
+            <span>Papel Recortado</span><div class="separator"></div>
+            <span>Mixed Media</span><div class="separator"></div>
+            <span>Arte Manual</span><div class="separator"></div>
+            <span>Texturas & Cores</span><div class="separator"></div>
+            <span>Criatividade</span><div class="separator"></div>
+        </div>
+    </div>
+
+    <!-- Collage Strip -->
+    <section class="collage-strip">
+        <div class="collage-scroll" id="collageScroll"></div>
+    </section>
+
+    <!-- About -->
+    <section class="about" id="sobre">
+        <div class="about-visual reveal">
+            <div class="about-card about-card-1">
+                <img id="aboutImg1" alt="Colagem artística 1">
+            </div>
+            <div class="about-card about-card-2">
+                <img id="aboutImg2" alt="Colagem artística 2">
+            </div>
+            <div class="about-card about-card-3">
+                <img id="aboutImg3" alt="Colagem artística 3">
+            </div>
+        </div>
+        <div class="about-text reveal">
+            <h2>Onde arte encontra <em>afeto</em></h2>
+            <p>
+                Somos um estúdio criativo especializado em colagem artística handmade. Cada peça é cuidadosamente criada com recortes de papel, texturas únicas e muita paixão pelo processo artesanal.
+            </p>
+            <p>
+                Acreditamos que a arte manual tem o poder de conectar pessoas, despertar memórias e transformar espaços comuns em lugares cheios de significado.
+            </p>
+            <p class="handwritten">✨ Cada recorte é uma intenção, cada camada é uma emoção</p>
+            <div class="tags">
+                <span class="tag">Colagem</span>
+                <span class="tag">Mixed Media</span>
+                <span class="tag">Papel Artesanal</span>
+                <span class="tag">Arte Decorativa</span>
+                <span class="tag">Encomendas</span>
+                <span class="tag">Workshops</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services -->
+    <section class="services" id="servicos">
+        <div class="section-header reveal">
+            <h2>O que criamos</h2>
+            <p>Cada projeto é uma oportunidade de transformar ideias em arte tangível e significativa</p>
+        </div>
+        <div class="services-grid">
+            <div class="service-card reveal">
+                <div class="service-icon">🎨</div>
+                <h3>Colagens Autorais</h3>
+                <p>Obras originais criadas com recortes de papel, revistas vintage e materiais exclusivos. Peças únicas para colecionadores e amantes de arte.</p>
+            </div>
+            <div class="service-card reveal">
+                <div class="service-icon">🖼️</div>
+                <h3>Decoração Personalizada</h3>
+                <p>Quadros e composições sob medida para transformar seus espaços. Cada peça é pensada para harmonizar com seu ambiente e personalidade.</p>
+            </div>
+            <div class="service-card reveal">
+                <div class="service-icon">🎁</div>
+                <h3>Presentes Especiais</h3>
+                <p>Presentes artísticos para momentos únicos. Criamos peças personalizadas que contam histórias e eternizam memórias especiais.</p>
+            </div>
+            <div class="service-card reveal">
+                <div class="service-icon">✂️</div>
+                <h3>Workshops Criativos</h3>
+                <p>Oficinas presenciais e online para aprender a arte da colagem. Desenvolva sua criatividade em um ambiente acolhedor e inspirador.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Gallery -->
+    <section class="gallery" id="galeria">
+        <div class="section-header reveal">
+            <h2>Nossa Galeria</h2>
+            <p>Uma seleção dos nossos trabalhos mais recentes — cada peça carrega uma história única</p>
+        </div>
+        <div class="gallery-grid" id="galleryGrid"></div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="testimonials">
+        <div class="section-header reveal">
+            <h2>O que dizem sobre nós</h2>
+            <p>Histórias de quem já levou um pedacinho da nossa arte para casa</p>
+        </div>
+        <div class="testimonial-slider reveal">
+            <div class="testimonial-card active">
+                <p class="quote">"A colagem que encomendei transformou completamente minha sala. Cada vez que olho, descubro um novo detalhe. É como ter um universo particular em casa."</p>
+                <p class="author">— Marina Santos</p>
+            </div>
+            <div class="testimonial-card">
+                <p class="quote">"O workshop foi uma experiência incrível! Aprendi técnicas que nunca imaginei e saí de lá com uma peça linda feita por mim. Recomendo demais!"</p>
+                <p class="author">— Pedro Oliveira</p>
+            </div>
+            <div class="testimonial-card">
+                <p class="quote">"Presenteei minha mãe com uma colagem personalizada e ela chorou de emoção. A sensibilidade e o cuidado em cada detalhe é impressionante."</p>
+                <p class="author">— Camila Ferreira</p>
+            </div>
+        </div>
+        <div class="testimonial-dots">
+            <div class="dot active" data-index="0"></div>
+            <div class="dot" data-index="1"></div>
+            <div class="dot" data-index="2"></div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section" id="contato">
+        <div class="cta-decoration">
+            <div class="deco deco-1"></div>
+            <div class="deco deco-2"></div>
+            <div class="deco deco-3"></div>
+        </div>
+        <div class="reveal">
+            <h2>Vamos criar <em>juntos</em>?</h2>
+            <p>Tem uma ideia em mente? Adoraríamos transformá-la em arte. Entre em contato e vamos conversar sobre seu projeto dos sonhos.</p>
+            <a href="https://www.instagram.com/detalhecolagem/" target="_blank" class="btn btn-primary">Nos Chame no Instagram ✦</a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-brand">
+                <a href="#" class="logo">detalhe colagem</a>
+                <p>Arte handmade feita com amor, papel e muita criatividade. Cada peça é única, assim como você.</p>
+                <div class="social-links">
+                    <a href="https://www.instagram.com/detalhecolagem/" target="_blank">✦</a>
+                    <a href="#" target="_blank">◆</a>
+                    <a href="#" target="_blank">●</a>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h4>Navegação</h4>
+                <ul>
+                    <li><a href="#inicio">Início</a></li>
+                    <li><a href="#sobre">Sobre</a></li>
+                    <li><a href="#servicos">Serviços</a></li>
+                    <li><a href="#galeria">Galeria</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Serviços</h4>
+                <ul>
+                    <li><a href="#">Colagens Autorais</a></li>
+                    <li><a href="#">Decoração</a></li>
+                    <li><a href="#">Presentes</a></li>
+                    <li><a href="#">Workshops</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Contato</h4>
+                <ul>
+                    <li><a href="https://www.instagram.com/detalhecolagem/" target="_blank">Instagram</a></li>
+                    <li><a href="#">Email</a></li>
+                    <li><a href="#">WhatsApp</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2026 Detalhe Colagem. Feito com ✦ e muito papel.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Loader
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.getElementById('loader').classList.add('hidden');
+            }, 1500);
+        });
+
+        // Custom Cursor
+        const cursor = document.getElementById('cursor');
+        let cursorVisible = false;
+        document.addEventListener('mousemove', (e) => {
+            if (!cursorVisible) { cursor.style.opacity = '1'; cursorVisible = true; }
+            cursor.style.left = e.clientX - 10 + 'px';
+            cursor.style.top = e.clientY - 10 + 'px';
+        });
+        document.addEventListener('mousedown', () => cursor.classList.add('active'));
+        document.addEventListener('mouseup', () => cursor.classList.remove('active'));
+        if ('ontouchstart' in window) cursor.style.display = 'none';
+
+        // Navbar scroll
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            navbar.classList.toggle('scrolled', window.scrollY > 50);
+        });
+
+        // Mobile menu
+        const menuToggle = document.getElementById('menuToggle');
+        const navLinks = document.getElementById('navLinks');
+        menuToggle.addEventListener('click', () => navLinks.classList.toggle('open'));
+        navLinks.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => navLinks.classList.remove('open'));
+        });
+
+        // Scroll reveal
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) entry.target.classList.add('visible');
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+        document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+        // Testimonial slider
+        const testimonialCards = document.querySelectorAll('.testimonial-card');
+        const dots = document.querySelectorAll('.dot');
+        let currentTestimonial = 0;
+        function showTestimonial(index) {
+            testimonialCards.forEach(card => card.classList.remove('active'));
+            dots.forEach(dot => dot.classList.remove('active'));
+            testimonialCards[index].classList.add('active');
+            dots[index].classList.add('active');
+            currentTestimonial = index;
+        }
+        dots.forEach(dot => dot.addEventListener('click', () => showTestimonial(parseInt(dot.dataset.index))));
+        setInterval(() => showTestimonial((currentTestimonial + 1) % testimonialCards.length), 5000);
+
+        // Parallax
+        window.addEventListener('scroll', () => {
+            const scrolled = window.scrollY;
+            document.querySelectorAll('.floating-shape').forEach((shape, i) => {
+                shape.style.transform = `translateY(${scrolled * (i + 1) * 0.05}px)`;
+            });
+        });
+
+        // Stagger animations
+        const serviceObserver = new IntersectionObserver((entries) => {
+            entries.forEach((entry, index) => {
+                if (entry.isIntersecting) {
+                    setTimeout(() => entry.target.classList.add('visible'), index * 150);
+                }
+            });
+        }, { threshold: 0.2 });
+        document.querySelectorAll('.service-card').forEach(card => serviceObserver.observe(card));
+
+        const galleryObserver = new IntersectionObserver((entries) => {
+            entries.forEach((entry, index) => {
+                if (entry.isIntersecting) {
+                    setTimeout(() => entry.target.classList.add('visible'), index * 100);
+                }
+            });
+        }, { threshold: 0.1 });
+    </script>
+</body>
+</html>
